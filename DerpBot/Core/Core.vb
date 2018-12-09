@@ -13,6 +13,7 @@ Public Module Program
     Public Const BOT_CONFIG = 1337UL
     Public Const CLIENT_CONFIG = 1338UL
     Public Const BOT_OWNER_ID = 304088134352764930UL
+
     Public ReadOnly StartTime As Date = Date.UtcNow
 
     Private _client As DiscordShardedClient

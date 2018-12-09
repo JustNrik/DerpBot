@@ -1,8 +1,8 @@
-﻿Imports Discord.Commands
-Imports Discord.WebSocket
+﻿Imports Discord.WebSocket
+Imports Qmmands
 
 Friend Class EnsureReactionUser
-    Implements ICriterion(Of SocketReaction)
+    Implements ICriteria(Of SocketReaction)
 
     Private ReadOnly _id As ULong
 
@@ -10,7 +10,7 @@ Friend Class EnsureReactionUser
         _id = id
     End Sub
 
-    Public Function JudgeAsync(sourceContext As ICommandContext, reaction As SocketReaction) As Task(Of Boolean) Implements ICriterion(Of SocketReaction).JudgeAsync
+    Public Function JudgeAsync(sourceContext As IDerpContext, reaction As SocketReaction) As Task(Of Boolean) Implements ICriteria(Of SocketReaction).JudgeAsync
         Return Task.FromResult(_id = reaction.UserId)
     End Function
 End Class

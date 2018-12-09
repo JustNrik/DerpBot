@@ -48,19 +48,19 @@ Public Class PaginatedMessageCallback
         Dim message = Await _derpContext.Channel.SendMessageAsync(_pager.Content,, BuildEmbed()).ConfigureAwait(False)
         message = message
         _interactive.AddReactionCallback(message, Me)
-        Dim derp = Task.Run(Async Function()
-                                Await message.AddReactionAsync(Options.First)
-                                Await message.AddReactionAsync(Options.Back)
-                                Await message.AddReactionAsync(Options.Next)
-                                Await message.AddReactionAsync(Options.Last)
-                                Dim manageMessages = _derpContext.User.GetPermissions(_derpContext.Channel).ManageMessages
-                                If Options.JumpDisplayOptions = JumpDisplayOptions.Always OrElse
+        Dim __ = Task.Run(Async Function()
+                              Await message.AddReactionAsync(Options.First)
+                              Await message.AddReactionAsync(Options.Back)
+                              Await message.AddReactionAsync(Options.Next)
+                              Await message.AddReactionAsync(Options.Last)
+                              Dim manageMessages = _derpContext.User.GetPermissions(_derpContext.Channel).ManageMessages
+                              If Options.JumpDisplayOptions = JumpDisplayOptions.Always OrElse
                                    Options.JumpDisplayOptions = JumpDisplayOptions.WithManageMessages AndAlso manageMessages Then Await message.AddReactionAsync(Options.Jump)
-                                Await message.AddReactionAsync(Options.Stop)
-                                If Options.DisplayInformationIcon Then Await message.AddReactionAsync(Options.Info)
-                            End Function)
+                              Await message.AddReactionAsync(Options.Stop)
+                              If Options.DisplayInformationIcon Then Await message.AddReactionAsync(Options.Info)
+                          End Function)
         If Timeout.HasValue AndAlso Timeout.Value <> Nothing Then _
-            Dim __ = Task.Run(Sub() Task.Delay(Timeout.Value).
+             __ = Task.Run(Sub() Task.Delay(Timeout.Value).
             ContinueWith(continuationAction:=Async Sub()
                                                  _interactive.RemoveReactionCallback(message)
                                                  Await message.DeleteAsync()

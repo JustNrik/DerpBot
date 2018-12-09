@@ -1,6 +1,5 @@
 ﻿Imports Discord
 Imports System.ComponentModel
-Imports Qmmands
 
 Public Class EnsureFromUserCriteria
     Implements ICriteria(Of IMessage)

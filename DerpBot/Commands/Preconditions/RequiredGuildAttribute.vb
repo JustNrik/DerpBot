@@ -1,6 +1,6 @@
 ﻿Imports Qmmands
 
-Public Class RequiredGuildAttribute
+Public Class RequireGuildAttribute
     Inherits CheckBaseAttribute
 
     Private ReadOnly _guildId As ULong
@@ -10,9 +10,8 @@ Public Class RequiredGuildAttribute
     End Sub
 
     Public Overrides Function CheckAsync(context As ICommandContext, provider As IServiceProvider) As Task(Of CheckResult)
-        Dim ctx = DirectCast(context, IDerpContext)
-        Return If(ctx.Guild.Id = _guildId,
+        Return If(DirectCast(context, DerpContext).Guild.Id = _guildId,
             Task.FromResult(CheckResult.Successful),
-            Task.FromResult(CheckResult.Unsuccessful("Unknown Command")))
+            Task.FromResult(CheckResult.Unsuccessful("This command cannot be executed in this guild")))
     End Function
 End Class

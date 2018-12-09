@@ -49,4 +49,5 @@ Public Class DeleteCallback
         Interative.RemoveReactionCallback(Message)
         Return True
     End Function
+
 End Class
