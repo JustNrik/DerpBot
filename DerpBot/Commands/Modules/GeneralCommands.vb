@@ -1,11 +1,12 @@
-﻿Imports System.IO
+﻿Imports DerpBot.DerpCommandResult
 Imports Discord
 Imports Humanizer
+Imports Qmmands
+Imports System.IO
 Imports SixLabors.ImageSharp
 Imports SixLabors.ImageSharp.Formats.Png
 Imports SixLabors.ImageSharp.PixelFormats
 Imports SixLabors.ImageSharp.Processing
-Imports Qmmands
 
 <RequiredContext(ContextType.Guild)>
 Public Class GeneralCommands
@@ -15,20 +16,22 @@ Public Class GeneralCommands
 
     <Command("ping", "p")>
     <RunMode(RunMode.Parallel)>
-    Async Function Ping() As Task
+    Async Function Ping() As Task(Of CommandResult)
         Dim sw = Stopwatch.StartNew()
         Dim message = Await ReplyAsync($"Current Shard Latency: {Context.Shard.Latency}ms, Current Ping: ")
         sw.Stop()
         Await message.ModifyAsync(Sub(msg) msg.Content = message.Content & " " & sw.ElapsedMilliseconds & " ms")
+        Return Successful
     End Function
 
     <Command("today")>
-    Function Today() As Task
-        Return ReplyAsync($"Today is {Date.UtcNow}")
+    Async Function Today() As Task(Of CommandResult)
+        Await ReplyAsync($"Today is {Date.UtcNow}")
+        Return Successful
     End Function
 
     <Command("botinfo", "binfo", "info")>
-    Async Function BotInfo() As Task
+    Async Function BotInfo() As Task(Of CommandResult)
         Dim embedBuilder As New EmbedBuilder
         With embedBuilder
             .WithColor(New Color(Random.NextByte(), Random.NextByte(), Random.NextByte()))
@@ -37,16 +40,18 @@ Public Class GeneralCommands
             .AddSignature(Context.User, Context.Guild)
         End With
         Await SendEmbedAsync(embedBuilder.Build())
+        Return Successful
     End Function
 
     <Command("me")>
-    Function [Me]() As Task
-        Return ReplyAsync(Context.User.ToString())
+    Async Function [Me]() As Task(Of CommandResult)
+        Await ReplyAsync(Context.User.ToString())
+        Return Successful
     End Function
 
     <Command("color")>
     <RunMode(RunMode.Parallel)>
-    Function Color() As Task
+    Async Function Color() As Task(Of CommandResult)
         Dim r = Random.NextByte()
         Dim g = Random.NextByte()
         Dim b = Random.NextByte()
@@ -63,14 +68,15 @@ Public Class GeneralCommands
                 image.Mutate(Sub(x) x.BackgroundColor(New Rgba32(arg.R, arg.G, arg.B)))
                 image.Save(stream, New PngEncoder())
                 stream.Position = 0
-                Return Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                Await Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                Return Successful
             End Using
         End Using
     End Function
 
     <Command("color")>
     <RunMode(RunMode.Parallel)>
-    Function SendColorAsync(r As Byte, g As Byte, b As Byte) As Task
+    Async Function SendColorAsync(r As Byte, g As Byte, b As Byte) As Task(Of CommandResult)
         Dim arg As New Color(r, g, b)
         Dim embedBuilder As New EmbedBuilder()
         With embedBuilder
@@ -84,14 +90,15 @@ Public Class GeneralCommands
                 image.Mutate(Sub(x) x.BackgroundColor(New Rgba32(arg.R, arg.G, arg.B)))
                 image.Save(stream, New PngEncoder())
                 stream.Position = 0
-                Return Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                Await Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                Return Successful
             End Using
         End Using
     End Function
 
     <Command("color")>
     <RunMode(RunMode.Parallel)>
-    Function SendColorAsync(value As String) As Task
+    Async Function SendColorAsync(value As String) As Task(Of CommandResult)
         Dim result As UInteger
         If UInteger.TryParse(value, Globalization.NumberStyles.AllowHexSpecifier, Nothing, result) Then
             Dim randomColor As New Color(result)
@@ -107,11 +114,13 @@ Public Class GeneralCommands
                     image.Mutate(Sub(x) x.BackgroundColor(New Rgba32(randomColor.R, randomColor.G, randomColor.B)))
                     image.Save(stream, New PngEncoder())
                     stream.Position = 0
-                    Return Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                    Await Context.Channel.SendFileAsync(stream, "color.png", "",, embedBuilder.Build())
+                    Return Successful
                 End Using
             End Using
         End If
-        Return ReplyAsync("Invalid hex")
+        Await ReplyAsync("Invalid hex")
+        Return Unsuccessful
     End Function
 
 End Class

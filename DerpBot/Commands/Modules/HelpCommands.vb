@@ -1,5 +1,6 @@
 ﻿Option Compare Text
 
+Imports DerpBot.DerpCommandResult
 Imports Discord
 Imports Discord.Format
 Imports SQLExpress
@@ -15,7 +16,7 @@ Public Class HelpCommands
     Public Property Interactive As InteractiveService
 
     <Command>
-    Async Function Help() As Task
+    Async Function Help() As Task(Of CommandResult)
         Dim modules = _Commands.GetAllModules().Where(Function(x) x.Name <> "Help")
         Dim canExecute As New List(Of [Module])
 
@@ -29,20 +30,21 @@ Public Class HelpCommands
             .AddField("Modules", String.Join(", ", canExecute.Select(Function(x) $"`{Sanitize(x.Name)}`")))
             Await (Await SendEmbedAsync(.Build())).AddDeleteCallbackAsync(Context, Interactive)
         End With
+        Return Successful
     End Function
 
     <Command>
     <Priority(1)>
-    Async Function Help(<Remainder> [module] As [Module]) As Task
+    Async Function Help(<Remainder> [module] As [Module]) As Task(Of CommandResult)
         Dim commands = [module].Commands
         Dim canExecute As New List(Of Command)
-        For Each command In commands
-            If (Await command.RunChecksAsync(Context, Services)).IsSuccessful Then canExecute.Add(command)
+        For Each cmd In commands
+            If (Await cmd.RunChecksAsync(Context, Services)).IsSuccessful Then canExecute.Add(cmd)
         Next
 
         If canExecute.Count = 0 Then
             Await ReplyAsync("You can't execute any commands in this module")
-            Return
+            Return Unsuccessful
         End If
 
         Dim remarks = [module].Attributes.OfType(Of RemarksAttribute).FirstOrDefault()
@@ -54,21 +56,23 @@ Public Class HelpCommands
             .AddField("Commands", String.Join(", ", canExecute.Select(Function(x) $"`{Sanitize(x.Aliases.FirstOrDefault())}`")))
             Await (Await SendEmbedAsync(.Build())).AddDeleteCallbackAsync(Context, Interactive)
         End With
+        Return Successful
     End Function
 
     <Command>
     <Priority(2)>
-    Async Function Help(<Remainder> commands As IEnumerable(Of Command)) As Task
+    Async Function Help(<Remainder> commands As IEnumerable(Of Command)) As Task(Of CommandResult)
         Dim builder = Await GetBuilderAsync()
         With builder
-            For Each command In commands
-                Dim usage = command.Attributes.OfType(Of RemarksAttribute).FirstOrDefault
-                .AddField(command.Name, $"**Usage**: {Await GetPrefixAsync()}{usage?.Remarks}" & vbCrLf &
-                                        $"**Summary**: {command.Description}" &
-                                        $"{If(command.Aliases.Count > 1, $"{vbCrLf}** Aliases **:  {String.Join(", ", command.Aliases.Select(Function(x) $"`{Sanitize(x)}`"))}", "")}")
+            For Each cmd In commands
+                Dim usage = cmd.Attributes.OfType(Of RemarksAttribute).FirstOrDefault
+                .AddField(cmd.Name, $"**Usage**: {Await GetPrefixAsync()}{usage?.Remarks}" & vbCrLf &
+                                        $"**Summary**: {cmd.Description}" &
+                                        $"{If(cmd.Aliases.Count > 1, $"{vbCrLf}** Aliases **:  {String.Join(", ", cmd.Aliases.Select(Function(x) $"`{Sanitize(x)}`"))}", "")}")
             Next
             Await (Await SendEmbedAsync(.Build())).AddDeleteCallbackAsync(Context, Interactive)
         End With
+        Return Successful
     End Function
 
     Async Function GetPrefixAsync() As Task(Of String)

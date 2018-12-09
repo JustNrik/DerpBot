@@ -60,7 +60,9 @@ Public Class MessageService
            guild.UseWhiteList AndAlso Not guild.WhiteList.Contains(message.Author.Id) Then Return
 
         Dim output As String = ""
-        If HasAnyPrefix(message.Content, guild.Prefixes, Nothing, output) Then
+        If HasAnyPrefix(message.Content, guild.Prefixes, Nothing, output) OrElse
+           HasMentionPrefix(message.Content, output) Then
+
             Dim context = New DerpContext(_client, message)
             If Not context.Guild.CurrentUser.GetPermissions(context.Channel).SendMessages Then Return
             Await _commands.ExecuteAsync(output, context, _services)
@@ -72,6 +74,9 @@ Public Class MessageService
     End Function
 
     Public Async Function OnCommandExecuted(command As Command, result As CommandResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandExecuted
+        If result Is Nothing Then
+            Await _log.LogAsync($"Command {command.Name} executed by {DirectCast(context, IDerpContext).User}", LogSource.Command)
+        End If
         If result.IsSuccessful Then Await _log.LogAsync($"Command {command.Name} executed by {DirectCast(context, IDerpContext).User}", LogSource.Command)
     End Function
 

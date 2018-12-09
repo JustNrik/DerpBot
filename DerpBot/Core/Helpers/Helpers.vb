@@ -14,6 +14,16 @@ Public Module Helpers
         DM
     End Enum
 
+    Public Function HasMentionPrefix(input As String, ByRef output As String) As Boolean
+        output = input
+
+        If Not input.StartsWith("<@!447495504834723850>") Then Return False
+
+        output = input.Substring(22)
+
+        Return True
+    End Function
+
 
     Public Function ParseSource(source As LogSource) As String
         Select Case source

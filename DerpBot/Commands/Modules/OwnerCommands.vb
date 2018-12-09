@@ -1,4 +1,5 @@
-﻿Imports SQLExpress
+﻿Imports DerpBot.DerpCommandResult
+Imports SQLExpress
 Imports Qmmands
 
 <RequiredOwner>
@@ -10,29 +11,33 @@ Public Class OwnerCommands
     Public Property Database As SQLExpressClient
 
     <Command("csrun")>
-    Function CSRun(<Remainder> code As String) As Task
-        Return Eval.RunCSharpScriptAsync(code, Context)
+    Async Function CSRun(<Remainder> code As String) As Task(Of CommandResult)
+        Await Eval.RunCSharpScriptAsync(code, Context)
+        Return Successful
     End Function
 
     <Command("cseval")>
-    Function CSEval(<Remainder> code As String) As Task
-        Return Eval.EvaluateCSharpScriptAsync(code, Context)
+    Async Function CSEval(<Remainder> code As String) As Task(Of CommandResult)
+        Await Eval.EvaluateCSharpScriptAsync(code, Context)
+        Return Successful
     End Function
 #Const VBScripting = True
 #If VBScripting Then
     <Command("vbrun")>
-    Function VBRun(<Remainder> code As String) As Task
-        Return Eval.RunVBasicScriptAsync(code, Context)
+    Async Function VBRun(<Remainder> code As String) As Task(Of CommandResult)
+        Await Eval.RunVBasicScriptAsync(code, Context)
+        Return Successful
     End Function
 
     <Command("vbeval")>
-    Function VBEval(<Remainder> code As String) As Task
-        Return Eval.EvaluateVBasicScriptAsync(code, Context)
+    Async Function VBEval(<Remainder> code As String) As Task(Of CommandResult)
+        Await Eval.EvaluateVBasicScriptAsync(code, Context)
+        Return Successful
     End Function
 #End If
 
     <Command("globalannoucement", "ga")>
-    Async Function GlobalAnnoucement(<Remainder> text As String) As Task
+    Async Function GlobalAnnoucement(<Remainder> text As String) As Task(Of CommandResult)
         Dim guildIds = Database.YieldData(Of ULong)("SELECT Id FROM guilds WHERE AnnouncementChannel > 0;")
         For Each id In guildIds
             Dim guildObj = Await Database.LoadObjectAsync(Of Guild)(id)
@@ -41,10 +46,12 @@ Public Class OwnerCommands
             If channel Is Nothing Then Continue For
             Await channel.SendMessageAsync(text)
         Next
+        Return Successful
     End Function
 
     <Command("memoryusage", "memusage", "getmem")>
-    Function GetMemoryUsage(Optional bool As Boolean = False) As Task
-        Return ReplyAsync($"{GC.GetTotalMemory(bool) \ (2 << 19)} MBs")
+    Async Function GetMemoryUsage(Optional bool As Boolean = False) As Task(Of CommandResult)
+        Await ReplyAsync($"{GC.GetTotalMemory(bool) \ (2 << 19)} MBs")
+        Return Successful
     End Function
 End Class
