@@ -1,5 +1,5 @@
 ﻿Imports SQLExpress
-Public Class Guild
+Public NotInheritable Class Guild
     Inherits SQLObject
 
     <Store>
@@ -17,9 +17,9 @@ Public Class Guild
     <Store>
     Public Property StarredMessages As New List(Of Message)
     <Store>
-    Public Property AdminRole As ULong?
+    Public Property Admins As New List(Of ULong)
     <Store>
-    Public Property ModRole As ULong?
+    Public Property Mods As New List(Of ULong)
     <Store, NotNull>
     Public Property UseWhiteList As Boolean
     <Store>

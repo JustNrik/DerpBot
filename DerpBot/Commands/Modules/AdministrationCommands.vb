@@ -156,4 +156,18 @@ Public Class AdministrationCommands
         Return Successful
     End Function
 
+    <Command("clear")>
+    <Description("Deletes certain amount of messages from this bot")>
+    <Remarks("clear 10")>
+    Async Function Clear(Optional amount As Integer = 100) As Task(Of CommandResult)
+        Dim messages = Await Context.Channel.GetMessagesAsync(amount).FlattenAsync()
+        Dim botMessages = messages.Where(Function(x) x.Author.Id = BOT_ID)
+        Dim options As New RequestOptions() With
+        {
+            .AuditLogReason = $"{Context.User.ToString()} requested to delete all messages of DerpBot in the channel #{Context.Channel.Name}"
+        }
+        Await Context.Channel.DeleteMessagesAsync(botMessages, options)
+        Return Successful
+    End Function
+
 End Class

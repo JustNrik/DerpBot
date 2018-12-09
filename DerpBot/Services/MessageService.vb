@@ -73,11 +73,16 @@ Public Class MessageService
         Return OnMessageReceived(message)
     End Function
 
-    Public Async Function OnCommandExecuted(command As Command, result As CommandResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandExecuted
-        If result Is Nothing Then
-            Await _log.LogAsync($"Command {command.Name} executed by {DirectCast(context, IDerpContext).User}", LogSource.Command)
-        End If
-        If result.IsSuccessful Then Await _log.LogAsync($"Command {command.Name} executed by {DirectCast(context, IDerpContext).User}", LogSource.Command)
+    Function OnCommandErrored(result As ExecutionFailedResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandErrored
+        Dim ctx = DirectCast(context, DerpContext)
+        Return If(result.Reason.Contains("exception"),
+            _log.LogAsync($"The command ""{result.Command}"" failed to be executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}. Reason: {result.Reason}, Exception trace: {result.Exception}", LogSource.CommandError),
+            _log.LogAsync($"The command ""{result.Command}"" failed to be executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}. Reason: {result.Reason}", LogSource.CommandError))
+    End Function
+
+    Function OnCommandExecuted(command As Command, result As CommandResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandExecuted
+        Dim ctx = DirectCast(context, DerpContext)
+        Return _log.LogAsync($"The command {command.Name} was successfully executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}", LogSource.Command)
     End Function
 
     Public Async Function SendMessageAsync(context As ICommandContext, Optional content As String = Nothing, Optional isTTS As Boolean = False, Optional embed As Embed = Nothing) As Task(Of IUserMessage)

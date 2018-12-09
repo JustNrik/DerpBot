@@ -10,13 +10,11 @@ Public Class LogService
     Implements IService
 
     Private WithEvents _client As DiscordShardedClient
-    Private WithEvents _command As CommandService
     Private WithEvents _db As SQLExpressClient
     Private ReadOnly _semaphore As New SemaphoreSlim(1, 1)
 
-    Sub New(client As DiscordShardedClient, command As CommandService, db As SQLExpressClient)
+    Sub New(client As DiscordShardedClient, db As SQLExpressClient)
         _client = client
-        _command = command
         _db = db
     End Sub
 
@@ -32,9 +30,9 @@ Public Class LogService
             Case Else
                 ForegroundColor = ConsoleColor.Green
         End Select
-        Write($"[{Date.Now,-19}] [{Center(ParseSource(source))}] ")
+        Await Out.WriteAsync($"[{Date.Now,-19}] [{Center(ParseSource(source))}] ")
         ForegroundColor = ConsoleColor.White
-        WriteLine(message)
+        Await Out.WriteLineAsync(message)
         _semaphore.Release()
     End Function
 
@@ -64,9 +62,9 @@ Public Class LogService
             Case Else
                 ForegroundColor = ConsoleColor.Green
         End Select
-        Write($"[{Date.UtcNow,-19}] [{Center("Database")}] ")
+        Await Out.WriteAsync($"[{Date.UtcNow,-19}] [{Center("Database")}] ")
         ForegroundColor = ConsoleColor.White
-        WriteLine($"An object of {obj.TableName} ({obj.Id}) has been {If(logType = LogType.Load, Center("loaded"), Center(logType.ToString() & "d"))}")
+        Await Out.WriteLineAsync($"An object of {obj.TableName} ({obj.Id}) has been {If(logType = LogType.Load, Center("loaded"), Center(logType.ToString() & "d"))}")
         _semaphore.Release()
     End Sub
     Function OnLeftGuild(guild As SocketGuild) As Task Handles _client.LeftGuild
@@ -124,18 +122,5 @@ Public Class LogService
 
     Function OnShardDisconnected(exception As Exception, client As DiscordSocketClient) As Task Handles _client.ShardDisconnected
         Return LogAsync($"Shard#{client?.ShardId.ToString("D4")} disconnected! Exception? = {If(exception?.Message, "nothing...")}", LogSource.ShardDisconnected)
-    End Function
-
-    Function OnCommandErrored(result As ExecutionFailedResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _command.CommandErrored
-        Dim ctx = DirectCast(context, DerpContext)
-        If result.Reason.Contains("exception") Then
-            Return LogAsync($"The command ""{result.Command}"" failed to be executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}. Reason: {result.Reason}, Exception trace: {result.Exception}", LogSource.CommandError)
-        End If
-        Return LogAsync($"The command ""{result.Command}"" failed to be executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}. Reason: {result.Reason}", LogSource.CommandError)
-    End Function
-
-    Function OnCommandExecuted(command As Command, result As CommandResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _command.CommandExecuted
-        Dim ctx = DirectCast(context, DerpContext)
-        Return LogAsync($"The command {command.Name} was successfully executed by the user {ctx.User.ToString()} in the guild/channel {ctx.Guild}/{ctx.Channel}", LogSource.Command)
     End Function
 End Class

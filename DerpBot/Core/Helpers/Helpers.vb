@@ -19,7 +19,7 @@ Public Module Helpers
 
         If Not input.StartsWith("<@!447495504834723850>") Then Return False
 
-        output = input.Substring(22)
+        output = input.Substring(23)
 
         Return True
     End Function

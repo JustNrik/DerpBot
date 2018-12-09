@@ -18,8 +18,8 @@ Public Class RequiredBotPermissionAttribute
 
     Public Overrides Function CheckAsync(context As ICommandContext, provider As IServiceProvider) As Task(Of CheckResult)
         Dim ctx = DirectCast(context, DerpContext)
-        If ChannelPermissions.Length > 0 AndAlso ctx.User.GetPermissions(ctx.Channel).ToList().Any(Function(x) ChannelPermissions.Contains(x)) OrElse
-            GuildPermissions.Length > 0 AndAlso ctx.User.GuildPermissions.ToList().Any(Function(x) GuildPermissions.Contains(x)) Then
+        If ChannelPermissions?.Length > 0 AndAlso ctx.User.GetPermissions(ctx.Channel).ToList().Any(Function(x) ChannelPermissions.Contains(x)) OrElse
+            GuildPermissions?.Length > 0 AndAlso ctx.User.GuildPermissions.ToList().Any(Function(x) GuildPermissions.Contains(x)) Then
 
             Return Task.FromResult(CheckResult.Successful)
         Else

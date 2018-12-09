@@ -10,134 +10,57 @@ Public Class GuildOwnerCommands
 
     Public Property Database As SQLExpressClient
 
-    <Command("addmodrole")>
-    Async Function AddModRole(<Remainder> role As IRole) As Task(Of CommandResult)
-        Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.ModRole.HasValue Then
-            guild.ModRole = role.Id
-            Await ReplyAsync("Mod role has been set")
-            Await Database.UpdateObjectAsync(guild)
-            Return Successful
-        Else
-            Await ReplyAsync("There's already a Mod role assigned for this guild")
-            Return Unsuccessful
-        End If
-    End Function
-
-    <Command("addadminrole")>
-    Async Function AddAdminRole(<Remainder> role As IRole) As Task(Of CommandResult)
-        Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.AdminRole.HasValue Then
-            guild.AdminRole = role.Id
-            Await ReplyAsync("Mod role has been set")
-            Await Database.UpdateObjectAsync(guild)
-            Return Successful
-        Else
-            Await ReplyAsync("There's already a Mod role assigned for this guild")
-            Return Unsuccessful
-        End If
-    End Function
-
     <Command("addmod")>
     Async Function AddMod(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.ModRole.HasValue Then
-            Await ReplyAsync("There's no Mod role set for this guild")
-            Return Unsuccessful
+        If guild.Mods.Contains(user.Id) Then
+            Await ReplyAsync("The user is already a mod")
+        ElseIf guild.BlackList.Contains(user.Id) Then
+            Await ReplyAsync("The user is blacklisted, remove him from the black list in order to make him a mod.")
         Else
-            Dim role = Context.Guild.GetRole(guild.ModRole.Value)
-            If user.RoleIds.Contains(role.Id) Then
-                Await ReplyAsync("The user already has a Mod role")
-                Return Unsuccessful
-            Else
-                Await user.AddRoleAsync(role)
-                Await ReplyAsync($"{user} is now a Mod")
-                Return Successful
-            End If
+            guild.Mods.Add(user.Id)
+            Await ReplyAsync($"The user {user} is now a mod!")
+            Await Database.UpdateObjectAsync(guild)
+            Return Successful
         End If
+        Return Unsuccessful
     End Function
 
     <Command("addadmin")>
     Async Function AddAdmin(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.AdminRole.HasValue Then
-            Await ReplyAsync("There's no Admin role set for this guild")
-            Return Unsuccessful
+        If guild.Admins.Contains(user.Id) Then
+            Await ReplyAsync("The user is already a mod")
+        ElseIf guild.BlackList.Contains(user.Id) Then
+            Await ReplyAsync("The user is blacklisted, remove him from the black list in order to make him a mod.")
         Else
-            Dim role = Context.Guild.GetRole(guild.AdminRole.Value)
-            If user.RoleIds.Contains(role.Id) Then
-                Await ReplyAsync("The user already has an Admin role")
-                Return Unsuccessful
-            Else
-                Await user.AddRoleAsync(role)
-                Await ReplyAsync($"{user} is now an Admin")
-                Return Successful
-            End If
-        End If
-    End Function
-
-    <Command("removemodrole")>
-    Async Function RemoveModRole(<Remainder> role As IRole) As Task(Of CommandResult)
-        Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.ModRole.HasValue Then
-            Await ReplyAsync("There's no Mod role set, hence can't remove any")
-            Return Unsuccessful
-        Else
-            guild.ModRole = Nothing
-            Await ReplyAsync($"The Mod role {role} has been successfully removed")
+            guild.Admins.Add(user.Id)
+            Await ReplyAsync($"The user {user} is now a mod!")
             Await Database.UpdateObjectAsync(guild)
             Return Successful
         End If
-    End Function
-
-    <Command("removeadminrole")>
-    Async Function RemoveAdminRole(<Remainder> role As IRole) As Task(Of CommandResult)
-        Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.AdminRole.HasValue Then
-            Await ReplyAsync("There's no Admin role set, hence can't remove any")
-            Return Unsuccessful
-        Else
-            guild.AdminRole = Nothing
-            Await ReplyAsync($"The Admin role {role} has been successfully removed")
-            Await Database.UpdateObjectAsync(guild)
-            Return Successful
-        End If
+        Return Unsuccessful
     End Function
 
     <Command("demotemod")>
     Async Function DemoteMod(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.ModRole.HasValue Then
-            Await ReplyAsync("There's no Mod role, hence can't demote")
-            Return Unsuccessful
-        Else
-            Dim role = Context.Guild.GetRole(guild.AdminRole.Value)
-            If user.RoleIds.Contains(role.Id) Then
-                Await user.RemoveRoleAsync(role)
-                Await ReplyAsync($"{user} has been demoted")
-                Return Successful
-            Else
-                Await ReplyAsync($"{user} does have any Admin role, hence can't demote")
-                Return Unsuccessful
-            End If
+        If guild.Mods.Contains(user.Id) Then
+            Await ReplyAsync(user.ToString() & " has been demoted from the moderation team")
+            Return Successful
         End If
+        Await ReplyAsync("The user is not a mod, hence can't demote.")
+        Return Unsuccessful
     End Function
 
     <Command("demoteadmin")>
     Async Function DemoteAdmin(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
-        If Not guild.AdminRole.HasValue Then
-            Await ReplyAsync("There's no Admin role, hence can't demote")
-        Else
-            Dim role = Context.Guild.GetRole(guild.AdminRole.Value)
-            If user.RoleIds.Contains(role.Id) Then
-                Await user.RemoveRoleAsync(role)
-                Await ReplyAsync($"{user} has been demoted")
-                Return Successful
-            Else
-                Await ReplyAsync($"{user} does have any Admin role, hence can't demote")
-            End If
+        If guild.Admins.Contains(user.Id) Then
+            Await ReplyAsync(user.ToString() & " has been demoted from the administration team")
+            Return Successful
         End If
+        Await ReplyAsync("The user is not an admin, hence can't demote.")
         Return Unsuccessful
     End Function
 

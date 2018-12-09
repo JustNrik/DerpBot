@@ -16,24 +16,23 @@ Public Class RequiredRoleAttribute
         Dim ctx = DirectCast(context, IDerpContext)
         Dim dbo = provider.GetService(Of SQLExpressClient)
         Dim guild = dbo.LoadObject(Of Guild)(ctx.Guild.Id)
-        Dim roleId As ULong
+        Dim hasRole As Boolean
 
         If ctx.User.Id = BOT_OWNER_ID Then Return Task.FromResult(CheckResult.Successful)
 
+        If guild.Admins.Count = 0 AndAlso guild.Mods.Count = 0 Then Return Task.FromResult(CheckResult.Unsuccessful("There aren't Admins or Mods added in this server"))
+
         Select Case role
             Case SpecialRole.Admin
-                roleId = If(guild.AdminRole, 0UL)
+                hasRole = guild.Admins.Contains(ctx.User.Id)
             Case SpecialRole.Moderator
-                roleId = If(guild.ModRole, 0UL)
+                hasRole = guild.Mods.Contains(ctx.User.Id)
             Case Else
                 Throw New ArgumentOutOfRangeException()
         End Select
 
-        If roleId = 0 OrElse Not ctx.Guild.Roles.Any(Function(x) x.Id = roleId) Then _
-            Return Task.FromResult(CheckResult.Unsuccessful($"{role} role not found. Please do `{guild.Prefixes.First()}set {role} Role` to setup this role"))
-        Dim user = DirectCast(ctx.User, SocketGuildUser)
-        Return If(user.HasRole(roleId),
+        Return If(hasRole,
             Task.FromResult(CheckResult.Successful),
-            Task.FromResult(CheckResult.Unsuccessful("You do not have the required role")))
+            Task.FromResult(CheckResult.Unsuccessful("You do not have the required permission")))
     End Function
 End Class
