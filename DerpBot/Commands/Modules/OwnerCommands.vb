@@ -10,28 +10,16 @@ Public Class OwnerCommands
     Public Property Eval As EvalService
     Public Property Database As SQLExpressClient
 
-    <Command("csrun")>
+    <Command("csrun", "cseval")>
     Async Function CSRun(<Remainder> code As String) As Task(Of CommandResult)
         Await Eval.RunCSharpScriptAsync(code, Context)
         Return Successful
     End Function
-
-    <Command("cseval")>
-    Async Function CSEval(<Remainder> code As String) As Task(Of CommandResult)
-        Await Eval.EvaluateCSharpScriptAsync(code, Context)
-        Return Successful
-    End Function
 #Const VBScripting = True
 #If VBScripting Then
-    <Command("vbrun")>
+    <Command("vbrun", "vbeval")>
     Async Function VBRun(<Remainder> code As String) As Task(Of CommandResult)
         Await Eval.RunVBasicScriptAsync(code, Context)
-        Return Successful
-    End Function
-
-    <Command("vbeval")>
-    Async Function VBEval(<Remainder> code As String) As Task(Of CommandResult)
-        Await Eval.EvaluateVBasicScriptAsync(code, Context)
         Return Successful
     End Function
 #End If

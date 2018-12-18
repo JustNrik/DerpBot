@@ -53,12 +53,12 @@ Public Class InteractiveService
         timeout = If(timeout, _defaultTimeout)
         Dim ctx = DirectCast(context, DerpContext)
         Dim message = Await ctx.Channel.SendMessageAsync(content, isTTS, embed, options)
-        Await Task.Run(Sub() Task.Delay(timeout.Value).ContinueWith(Sub() message.DeleteAsync.ConfigureAwait(False)).ConfigureAwait(False))
+        Dim __ = Task.Run(Sub() Task.Delay(timeout.Value).ContinueWith(Sub() message.DeleteAsync.ConfigureAwait(False)).ConfigureAwait(False))
         Return message
     End Function
 
     Sub AddReactionCallback(message As IMessage, callback As IReactionCallback)
-        _callbacks(message.Id) = callback
+        _callbacks.TryAdd(message.Id, callback)
     End Sub
 
     Public Sub RemoveReactionCallback(message As IMessage)
@@ -82,7 +82,7 @@ Public Class InteractiveService
 
         Select Case callback.RunMode
             Case RunMode.Parallel
-                Await Task.Run(action:=Async Sub() If Await callback.HandleCallbackAsync(reaction).ConfigureAwait(False) Then RemoveReactionCallback(message.Id))
+                Dim __ = Task.Run(action:=Async Sub() If Await callback.HandleCallbackAsync(reaction).ConfigureAwait(False) Then RemoveReactionCallback(message.Id))
             Case Else
                 If Await callback.HandleCallbackAsync(reaction).ConfigureAwait(False) Then RemoveReactionCallback(message.Id)
         End Select

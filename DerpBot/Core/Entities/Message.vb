@@ -18,7 +18,7 @@ Public Class Message
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "messages"
+            Return "Messages"
         End Get
     End Property
 End Class

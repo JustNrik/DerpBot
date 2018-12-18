@@ -5,13 +5,11 @@ Public Class CommandConfig
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "commandconfig"
+            Return "CommandConfig"
         End Get
     End Property
 
     <Store>
     Public Property CaseSensitiveCommands As Boolean
-    <Store>
-    Public Property LogLevel As Integer
 End Class
 

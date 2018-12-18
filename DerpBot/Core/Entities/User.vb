@@ -10,7 +10,7 @@ Public Class User
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "users"
+            Return "Users"
         End Get
     End Property
 End Class

@@ -20,8 +20,8 @@ Public Class EcomonyService
 
     Public Async Function AddMoneyAsync(user As User, amount As Integer) As Task
         If amount = 0 Then Return
-        If user.Money + amount > Integer.MaxValue Then user.Money = Integer.MaxValue
-        If user.Money + amount < 0 Then user.Money = 0
+        If user.Money > Integer.MaxValue - amount Then user.Money = Integer.MaxValue
+        If user.Money + amount < 0 Then user.Money = 0 Else user.Money += amount
         Await _db.UpdateObjectAsync(user)
     End Function
 

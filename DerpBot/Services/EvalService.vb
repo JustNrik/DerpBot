@@ -1,4 +1,5 @@
 ﻿Imports Discord
+Imports Discord.WebSocket
 Imports Microsoft.CodeAnalysis.CSharp.Scripting
 Imports Microsoft.CodeAnalysis.Scripting
 #Const VBScripting = True
@@ -18,6 +19,10 @@ Public Class EvalService
             "System", "System.Diagnostics", "System.Linq", "DerpBot",
             "System.Collections.Generic", "System.Net", "SQLExpress",
             "System.Threading.Tasks", "Microsoft.Extensions.DependencyInjection"
+        }
+    Private ReadOnly _references As Assembly() =
+        {
+            GetType(IDiscordClient).Assembly, GetType(DiscordSocketClient).Assembly, GetType(DerpBot).Assembly
         }
     Private Const CSHARP_LOGO = "https://camo.githubusercontent.com/0617f4657fef12e8d16db45b8d73def73144b09f/68747470733a2f2f646576656c6f7065722e6665646f726170726f6a6563742e6f72672f7374617469632f6c6f676f2f6373686172702e706e67"
 #If VBScripting Then
@@ -45,38 +50,24 @@ Public Class EvalService
 
     Public Async Function RunCSharpScriptAsync(code As String, context As DerpContext) As Task
         Dim globals As New Globals(context, _provider)
+        Dim options = ScriptOptions.Default.WithImports(_namespaces).WithReferences(_references)
+        Dim script = CSharpScript.Create(code, options, GetType(Globals))
         Try
-            Dim sw = Stopwatch.StartNew()
-            Dim state = Await CSharpScript.RunAsync(code, ScriptOptions.Default.WithImports(_namespaces).WithReferences(Assembly.GetEntryAssembly()), globals)
-            sw.Stop()
+            Dim sw1 = Stopwatch.StartNew()
+            Dim compiled = script.Compile()
+            sw1.Stop()
+            Dim sw2 = Stopwatch.StartNew()
+            Dim state = Await script.RunAsync(globals)
+            sw1.Stop()
             Dim eb = New EmbedBuilder().
                     WithTitle("Eval executed successfully").
-                    AddField("Input", $"```cs{vbLf}{code}```").
                     WithColor(Color.Green).
                     WithCurrentTimestamp().
-                    WithFooter($"Requested by: {context.User.Username}#{context.User.Discriminator}, Compiled in {sw.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
+                    WithFooter($"Requested by: {context.User.GetDisplayName()}, Compiled in {sw1.ElapsedMilliseconds}ms, Ran in {sw2.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
                     WithThumbnailUrl(CSHARP_LOGO).
-                    AddFieldIf(state.ReturnValue IsNot Nothing, "Output", $"```cs{vbLf}{state.ReturnValue}```")
-            Await _message.SendEmbedAsync(context, eb.Build)
-        Catch ex As CompilationErrorException
-            _message.NewMessageAsync(context, String.Join(vbCrLf, ex.Diagnostics)).ConfigureAwait(False).GetAwaiter().GetResult()
-        End Try
-    End Function
+                    AddFieldIf(state.ReturnValue IsNot Nothing, "Output", $"```cs{vbLf}{state.ReturnValue}```").
+                    AddFieldIf(state.ReturnValue IsNot Nothing, "Return Type", $"```cs{vbLf}[{state.ReturnValue.GetType()}]```")
 
-    Public Async Function EvaluateCSharpScriptAsync(code As String, context As DerpContext) As Task
-        Dim globals As New Globals(context, _provider)
-        Try
-            Dim sw = Stopwatch.StartNew()
-            Dim returnValue = Await CSharpScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(_namespaces).WithReferences(Assembly.GetEntryAssembly()), globals)
-            sw.Stop()
-            Dim eb = New EmbedBuilder().
-                    WithTitle("Eval executed successfully").
-                    AddField("Input", $"```cs{vbLf}{code}```").
-                    WithColor(Color.Green).
-                    WithCurrentTimestamp().
-                    WithFooter($"Requested by: {context.User.Username}#{context.User.Discriminator}, Compiled in {sw.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
-                    WithThumbnailUrl(CSHARP_LOGO).
-                    AddFieldIf(returnValue IsNot Nothing, "Output", $"```cs{vbLf}{returnValue}```")
             Await _message.SendEmbedAsync(context, eb.Build)
         Catch ex As CompilationErrorException
             _message.NewMessageAsync(context, String.Join(vbCrLf, ex.Diagnostics)).ConfigureAwait(False).GetAwaiter().GetResult()
@@ -98,26 +89,6 @@ Public Class EvalService
                     WithFooter($"Requested by: {context.User.Username}#{context.User.Discriminator}, Compiled in {sw.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
                     WithThumbnailUrl(VBASIC_LOGO).
                     AddFieldIf(state.ReturnValue IsNot Nothing, "Output", $"```vb{vbLf}{state.ReturnValue}```")
-            Await _message.SendEmbedAsync(context, eb.Build)
-        Catch ex As CompilationErrorException
-            _message.NewMessageAsync(context, String.Join(vbCrLf, ex.Diagnostics)).ConfigureAwait(False).GetAwaiter().GetResult()
-        End Try
-    End Function
-
-    Public Async Function EvaluateVBasicScriptAsync(code As String, context As DerpContext) As Task
-        Dim globals As New Globals(context, _provider)
-        Try
-            Dim sw = Stopwatch.StartNew()
-            Dim returnValue = Await VisualBasicScript.EvaluateAsync(code, ScriptOptions.Default.WithImports(_namespaces).WithReferences(Assembly.GetEntryAssembly()), globals)
-            sw.Stop()
-            Dim eb = New EmbedBuilder().
-                    WithTitle("Eval executed successfully").
-                    AddField("Input", $"```vb{vbLf}{code}```").
-                    WithColor(Color.Green).
-                    WithCurrentTimestamp().
-                    WithFooter($"Requested by: {context.User.Username}#{context.User.Discriminator}, Compiled in {sw.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
-                    WithThumbnailUrl(VBASIC_LOGO).
-                    AddFieldIf(returnValue IsNot Nothing, "Output", $"```vb{vbLf}{returnValue}```")
             Await _message.SendEmbedAsync(context, eb.Build)
         Catch ex As CompilationErrorException
             _message.NewMessageAsync(context, String.Join(vbCrLf, ex.Diagnostics)).ConfigureAwait(False).GetAwaiter().GetResult()

@@ -14,7 +14,9 @@ Public Class GuildOwnerCommands
     Async Function AddMod(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
         If guild.Mods.Contains(user.Id) Then
-            Await ReplyAsync("The user is already a mod")
+            Await ReplyAsync("The user is already a Mod")
+        ElseIf guild.Admins.Contains(user.Id) Then
+            Await ReplyAsync("The user is an Admin, can't add him as Mod")
         ElseIf guild.BlackList.Contains(user.Id) Then
             Await ReplyAsync("The user is blacklisted, remove him from the black list in order to make him a mod.")
         Else
@@ -30,7 +32,15 @@ Public Class GuildOwnerCommands
     Async Function AddAdmin(<Remainder> user As IGuildUser) As Task(Of CommandResult)
         Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
         If guild.Admins.Contains(user.Id) Then
-            Await ReplyAsync("The user is already a mod")
+            Await ReplyAsync("The user is already an Admin")
+        ElseIf guild.BlackList.Contains(user.id) Then
+            Await ReplyAsync("The user is blacklisted, can't add him as Admin")
+        ElseIf guild.Mods.Contains(user.id) Then
+            guild.Admins.Add(user.Id)
+            guild.Mods.Remove(user.Id)
+            Await ReplyAsync("The user has been promoted from Mod to Admin")
+            Await Database.UpdateObjectAsync(guild)
+            Return Successful
         ElseIf guild.BlackList.Contains(user.Id) Then
             Await ReplyAsync("The user is blacklisted, remove him from the black list in order to make him a mod.")
         Else

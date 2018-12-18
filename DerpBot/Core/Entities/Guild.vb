@@ -35,7 +35,7 @@ Public NotInheritable Class Guild
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "guilds"
+            Return "Guilds"
         End Get
     End Property
 

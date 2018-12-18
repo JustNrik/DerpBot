@@ -7,13 +7,11 @@ Imports Qmmands
 Public Class StartupService
     Implements IService
 
-    Private ReadOnly _commands As CommandService
     Private ReadOnly _log As LogService
     Private ReadOnly _services As IServiceProvider
 
-    Sub New(services As IServiceProvider, commands As CommandService, db As SQLExpressClient, clients As DiscordShardedClient, log As LogService)
+    Sub New(services As IServiceProvider, log As LogService)
         _services = services
-        _commands = commands
         _log = log
     End Sub
 

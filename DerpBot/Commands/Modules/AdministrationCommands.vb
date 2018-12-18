@@ -3,7 +3,7 @@ Imports Discord
 Imports SQLExpress
 Imports Qmmands
 
-<RequiredRole(SpecialRole.Admin)>
+<RequiredSpecialRole(SpecialRole.Admin)>
 <RequiredContext(ContextType.Guild)>
 Public Class AdministrationCommands
     Inherits DerpBase(Of DerpContext)
@@ -16,16 +16,14 @@ Public Class AdministrationCommands
     Async Function Ban(user As IGuildUser, Optional reason As String = Nothing, Optional pruneDays As Integer = 0) As Task(Of CommandResult)
         If pruneDays < 0 OrElse pruneDays > 7 Then
             Await ReplyAsync("Prune days must be between 0 and 7")
-            Return Unsuccessful
-        End If
-        If Await Context.Guild.GetBanAsync(user) IsNot Nothing Then
+        ElseIf Await Context.Guild.GetBanAsync(user) IsNot Nothing Then
             Await Context.Guild.AddBanAsync(user, pruneDays, reason)
             Await ReplyAsync($"{user} has been banned because: {If(reason, "*no reason provided*")}")
             Return Successful
         Else
             Await ReplyAsync($"{user} is already banned")
-            Return Unsuccessful
         End If
+        Return Unsuccessful
     End Function
 
     <Command("getban", "getb")>
@@ -166,7 +164,13 @@ Public Class AdministrationCommands
         {
             .AuditLogReason = $"{Context.User.ToString()} requested to delete all messages of DerpBot in the channel #{Context.Channel.Name}"
         }
-        Await Context.Channel.DeleteMessagesAsync(botMessages, options)
+        If Context.Guild.CurrentUser.GuildPermissions.ManageMessages Then
+            Await Context.Channel.DeleteMessagesAsync(botMessages, options)
+        Else
+            For Each message In botMessages
+                Dim __ = Task.Run(action:=Async Sub() Await message.DeleteAsync())
+            Next
+        End If
         Return Successful
     End Function
 

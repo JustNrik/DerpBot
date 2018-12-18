@@ -54,19 +54,23 @@ Public Class LogService
         _semaphore.Release()
     End Function
 
-    Async Sub OnDbLog(obj As IStoreableObject, logType As LogType) Handles _db.Log
+    Async Function OnDbLog(result As SqlResult) As Task Handles _db.Log
         Await _semaphore.WaitAsync()
-        Select Case logType
-            Case LogType.Delete
+        Select Case result.LogSource
+            Case DbLogSource.Remove
                 ForegroundColor = ConsoleColor.Red
             Case Else
                 ForegroundColor = ConsoleColor.Green
         End Select
         Await Out.WriteAsync($"[{Date.UtcNow,-19}] [{Center("Database")}] ")
         ForegroundColor = ConsoleColor.White
-        Await Out.WriteLineAsync($"An object of {obj.TableName} ({obj.Id}) has been {If(logType = LogType.Load, Center("loaded"), Center(logType.ToString() & "d"))}")
+        If result.Successful Then
+            Await Out.WriteLineAsync($"An object of {result.Obj.TableName} ({result.Obj.Id}) has been {If(result.LogSource = DbLogSource.Load, Center("loaded"), Center(result.LogSource.ToString() & "d"))}")
+        Else
+            Await Out.WriteLineAsync($"Failed to {result.LogSource.ToString()} an object from {result.Obj.TableName} ({result.Obj.Id}), probably because of: {result.Summary} {result.Exception?.Message}")
+        End If
         _semaphore.Release()
-    End Sub
+    End Function
     Function OnLeftGuild(guild As SocketGuild) As Task Handles _client.LeftGuild
         Return LogAsync($"We have been kicked from {guild.Name} :(", LogSource.LeftGuild)
     End Function
@@ -74,12 +78,12 @@ Public Class LogService
     Async Function OnJoinedGuild(guild As SocketGuild) As Task Handles _client.JoinedGuild
         Dim guildObj As New Guild With {.Owner = guild.OwnerId, .Id = guild.Id}
         Await LogAsync($"{guild.Owner.Username}#{guild.Owner.Discriminator} has joined us to his guild {guild.Name}", LogSource.JoinedGuild)
-        _db.CreateNewObject(guildObj)
+        Await _db.CreateObjectAsync(guildObj)
         Dim count = _client.GetShardFor(guild).Guilds.Count
-        Dim currentConfig = _db.LoadObject(Of ClientConfig)(CLIENT_CONFIG)
+        Dim currentConfig = Await _db.LoadObjectAsync(Of ClientConfig)(CLIENT_CONFIG)
         If count >= 2000 AndAlso currentConfig.TotalShards < count \ 2000 Then
             currentConfig.TotalShards = count \ 2000
-            _db.UpdateObject(currentConfig)
+            Await _db.UpdateObjectAsync(currentConfig)
             Await LogAsync($"A new shard has been added, restart the bot to initialize it! Total Shards: {currentConfig.TotalShards}", LogSource.JoinedGuild)
         End If
     End Function
@@ -87,7 +91,7 @@ Public Class LogService
     Async Function OnGuildAvailable(guild As SocketGuild) As Task Handles _client.GuildAvailable
         Await LogAsync($"{guild.Name} is now available", LogSource.GuildAvailable)
         Dim guildObj As New Guild With {.Owner = guild.OwnerId, .Id = guild.Id}
-        If Not _db.CheckExistence(guildObj) Then _db.CreateNewObject(guildObj)
+        If Not _db.CheckExistence(guildObj) Then Await _db.CreateObjectAsync(guildObj)
     End Function
 
     Function OnGuildMembersDownloaded(guild As SocketGuild) As Task Handles _client.GuildMembersDownloaded
@@ -105,7 +109,7 @@ Public Class LogService
     Async Function OnUserJoined(user As SocketGuildUser) As Task Handles _client.UserJoined
         Await LogAsync($"{user.Username}#{user.Discriminator} has joined to {user.Guild.Name}", LogSource.UserJoined)
         Dim userObj As New User With {.Id = user.Id}
-        If Not Await _db.CheckExistenceAsync(userObj) Then Await _db.CreateNewObjectAsync(userObj)
+        If Not Await _db.CheckExistenceAsync(userObj) Then Await _db.CreateObjectAsync(userObj)
     End Function
 
     Function OnUserUnbanned(user As SocketUser, guild As SocketGuild) As Task Handles _client.UserUnbanned

@@ -5,7 +5,7 @@ Public Class ClientConfig
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "clientconfig"
+            Return "ClientConfig"
         End Get
     End Property
 

@@ -5,9 +5,8 @@ Imports Qmmands
 Imports SQLExpress
 Imports System.Console
 Imports System.Reflection
-Imports System.Xml
 
-Public Module Program
+Public Module DerpBot
 
     Public Const COMMAND_CONFIG = 1336UL
     Public Const BOT_CONFIG = 1337UL
@@ -30,12 +29,13 @@ Public Module Program
 
     Async Function MainAsync() As Task
         ShowLogo()
-        InitializeDatabase()
+        Await InitializeDatabaseAsync()
 
         Dim token = (Await _db.LoadObjectAsync(Of BotConfig)(BOT_CONFIG)).Token
-
-        _client = New DiscordShardedClient(GetClientConfig())
-        _commands = New CommandService(GetCommandConfig())
+        Dim clientConfig = Await GetClientConfigAsync()
+        Dim commandConfig = Await GetCommandConfigAsync()
+        _client = New DiscordShardedClient(clientConfig)
+        _commands = New CommandService(commandConfig)
         _services = BuildServices()
 
         Await SetupCommandsAsync()
@@ -55,7 +55,7 @@ Public Module Program
         If internalAddParser Is Nothing Then Throw New QuahuRenamedException("InternalAddParser")
 
         For Each parser In parsers
-            Dim targetType = parser.BaseType.GetGenericArguments().First()
+            Dim targetType = parser.BaseType.GetGenericArguments()(0)
             internalAddParser.Invoke(_commands, New Object() {targetType, Activator.CreateInstance(parser), False})
         Next
 
@@ -89,22 +89,21 @@ Public Module Program
         Return serviceCollection.BuildServiceProvider()
     End Function
 
-    Sub InitializeDatabase()
-        Dim xDoc As New XmlDocument()
-
-        xDoc.Load(".\config.xml")
-        _db = New SQLExpressClient(xDoc)
+    Async Function InitializeDatabaseAsync() As Task
+        Dim json = IO.File.ReadAllText("config.json")
+        Dim config = Newtonsoft.Json.JsonConvert.DeserializeObject(Of SqlConfiguration)(json)
+        _db = New SqlExpressClient(config)
 
         Dim objs = (From type In _assemblyTypes
-                    Where GetType(IStoreableObject).IsAssignableFrom(type)
-                    Select DirectCast(Activator.CreateInstance(type), IStoreableObject)).ToArray()
+                    Where GetType(IStorableObject).IsAssignableFrom(type)
+                    Select DirectCast(Activator.CreateInstance(type), IStorableObject)).ToArray()
 
-        _db.InitialiseObjects(objs)
-        _db.LoadObjectsCache(objs)
-    End Sub
+        Await _db.InitializeObjectsAsync(objs)
+        Await _db.LoadObjectCacheAsync(objs)
+    End Function
 
-    Function GetClientConfig() As DiscordSocketConfig
-        Dim clientConfig = _db.LoadObject(Of ClientConfig)(CLIENT_CONFIG)
+    Async Function GetClientConfigAsync() As Task(Of DiscordSocketConfig)
+        Dim clientConfig = Await _db.LoadObjectAsync(Of ClientConfig)(CLIENT_CONFIG)
         Return New DiscordSocketConfig With
         {
             .AlwaysDownloadUsers = clientConfig.AlwaysDownloadUsers,
@@ -114,8 +113,8 @@ Public Module Program
         }
     End Function
 
-    Function GetCommandConfig() As CommandServiceConfiguration
-        Dim commandConfig = _db.LoadObject(Of CommandConfig)(COMMAND_CONFIG)
+    Async Function GetCommandConfigAsync() As Task(Of CommandServiceConfiguration)
+        Dim commandConfig = Await _db.LoadObjectAsync(Of CommandConfig)(COMMAND_CONFIG)
         Return New CommandServiceConfiguration With
         {
             .CaseSensitive = commandConfig.CaseSensitiveCommands,

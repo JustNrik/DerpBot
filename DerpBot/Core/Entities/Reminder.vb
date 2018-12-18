@@ -1,10 +1,10 @@
 ﻿Imports SQLExpress
 Public Class Reminder
-    Inherits SQLObject
+    Inherits SqlObject
 
-    <Store, StringLength(200)>
+    <Store, Varchar(200)>
     Public Property Reminder As String
-    <Store, StringLength(100)>
+    <Store, Varchar(100)>
     Public Property JumpLink As String
     <Store, NotNull>
     Public Property GuildId As ULong
@@ -17,7 +17,7 @@ Public Class Reminder
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "reminders"
+            Return "Reminders"
         End Get
     End Property
 End Class

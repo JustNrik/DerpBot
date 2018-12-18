@@ -120,7 +120,7 @@ Module Extensions
         Dim emoji As New Emoji("🚮")
         Await msg.AddReactionAsync(emoji)
         Dim callback As New DeleteCallback(context, interactive, msg, emoji)
-        callback.StartDelayAsync()
+        callback.StartDelay()
         Return msg
     End Function
 End Module

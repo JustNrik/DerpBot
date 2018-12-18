@@ -7,12 +7,15 @@ Imports SixLabors.ImageSharp
 Imports SixLabors.ImageSharp.Formats.Png
 Imports SixLabors.ImageSharp.PixelFormats
 Imports SixLabors.ImageSharp.Processing
+Imports SQLExpress
 
 <RequiredContext(ContextType.Guild)>
 Public Class GeneralCommands
     Inherits DerpBase(Of DerpContext)
 
     Public Property Random As DerpRandom
+    Public Property Economy As EcomonyService
+    Public Property Database As SQLExpressClient
 
     <Command("ping", "p")>
     <RunMode(RunMode.Parallel)>
@@ -45,7 +48,16 @@ Public Class GeneralCommands
 
     <Command("me")>
     Async Function [Me]() As Task(Of CommandResult)
-        Await ReplyAsync(Context.User.ToString())
+        Dim guild = Await Database.LoadObjectAsync(Of Guild)(Context.Guild.Id)
+        Dim builder As New EmbedBuilder()
+        With builder
+            .WithAuthor(Context.User.ToString())
+            .AddField("Money", Await Economy.GetMoneyAsync(Context.User.Id))
+            .AddFieldIf(guild.Admins.Any(Function(id) id = Context.User.Id), "Admin", Context.User.GuildPermissions.ToString())
+            .AddFieldIf(guild.Mods.Any(Function(id) id = Context.User.Id), "Mod", Context.User.GuildPermissions.ToString())
+            .WithCurrentTimestamp()
+        End With
+        Await SendEmbedAsync(builder.Build())
         Return Successful
     End Function
 

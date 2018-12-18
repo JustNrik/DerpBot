@@ -41,19 +41,27 @@ Public Class MessageService
         Return Task.FromResult(True)
     End Function
 
-    Public Async Function OnMessageReceived(msg As SocketMessage) As Task Handles _client.MessageReceived
+    Public Function OnMessageReceived(msg As SocketMessage) As Task Handles _client.MessageReceived
+        Return HandleMessage(msg, False)
+    End Function
+
+    Public Function OnMessageUpdated(cache As Cacheable(Of IMessage, ULong), message As SocketMessage, channel As ISocketMessageChannel) As Task Handles _client.MessageUpdated
+        Return HandleMessage(message, true)
+    End Function
+
+    Async Function HandleMessage(msg As SocketMessage, isUpdated As Boolean) As Task
         Dim channel = TryCast(msg.Channel, SocketGuildChannel)
         Dim message = TryCast(msg, SocketUserMessage)
         If msg.Author.IsBot OrElse String.IsNullOrEmpty(msg.Content) OrElse channel Is Nothing OrElse message Is Nothing Then Return
 
-        If _random.Next(100) < 10 Then
+        If Not isUpdated AndAlso _random.Next(100) < 10 Then
             Dim user = Await _database.LoadObjectAsync(Of User)(message.Author.Id)
             Dim amount = _random.Next(1, 3)
-            Await _economy.AddMoneyAsync(user, amount)
+            Dim __ = Task.Run(action:=Async Sub() Await _economy.AddMoneyAsync(user, amount))
             Await _log.LogAsync($"The user {DirectCast(message.Author, IGuildUser).GetDisplayName()} ({message.Author.Id}) won {amount} money in the guild {channel.Guild.Name}!", LogSource.Economy)
         End If
 
-        Dim guild = _database.LoadObject(Of Guild)(channel.Guild.Id)
+        Dim guild = Await _database.LoadObjectAsync(Of Guild)(channel.Guild.Id)
 
         If guild.BlackList.Contains(message.Author.Id) OrElse
            guild.RestrictedChannels.Contains(channel.Id) OrElse
@@ -63,14 +71,10 @@ Public Class MessageService
         If HasAnyPrefix(message.Content, guild.Prefixes, Nothing, output) OrElse
            HasMentionPrefix(message.Content, output) Then
 
-            Dim context = New DerpContext(_client, message)
+            Dim context As New DerpContext(_client, message)
             If Not context.Guild.CurrentUser.GetPermissions(context.Channel).SendMessages Then Return
             Await _commands.ExecuteAsync(output, context, _services)
         End If
-    End Function
-
-    Public Function OnMessageUpdated(cache As Cacheable(Of IMessage, ULong), message As SocketMessage, channel As ISocketMessageChannel) As Task Handles _client.MessageUpdated
-        Return OnMessageReceived(message)
     End Function
 
     Function OnCommandErrored(result As ExecutionFailedResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandErrored

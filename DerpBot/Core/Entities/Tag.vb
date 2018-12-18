@@ -1,11 +1,11 @@
 ﻿Imports SQLExpress
 
 Public Class Tag
-    Inherits SQLObject
+    Inherits SqlObject
 
-    <Store, StringLength(50)>
+    <Store, Varchar(50)>
     Public Property TagName As String
-    <Store, StringLength(1000)>
+    <Store, Varchar(1000)>
     Public Property TagValue As String
     <Store, NotNull>
     Public Property TagOwner As ULong
@@ -16,7 +16,7 @@ Public Class Tag
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "tags"
+            Return "Tags"
         End Get
     End Property
 End Class

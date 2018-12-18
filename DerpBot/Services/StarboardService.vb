@@ -23,37 +23,6 @@ Public Class StarboardService
     Async Function OnReactionAdded(__ As Cacheable(Of IUserMessage, ULong), channel As ISocketMessageChannel, reaction As SocketReaction) As Task _
         'Handles _client.ReactionAdded, _client.ReactionRemoved
 
-        If Not reaction.Emote.Equals(EmotesDict("star")) Then Return
-
-        Dim guildChannel = TryCast(channel, IGuildChannel)
-        If guildChannel Is Nothing Then Return
-
-        Dim author = reaction.Message.Value.Author
-        If author.IsBot OrElse author.IsWebhook Then Return
-
-        Dim guild = Await _database.LoadObjectAsync(Of Guild)(guildChannel.GuildId)
-        If Not (guild.Starboard.HasValue OrElse reaction.Message.IsSpecified) Then Return
-
-        Dim starCount = reaction.Message.Value.Reactions.Where(Function(x) x.Key.Equals(EmotesDict("star"))).Count
-        If starCount < guild.StarCount Then Return
-
-        Dim starChannel = Await guildChannel.Guild.GetTextChannelAsync(guild.Starboard.Value)
-        Dim embedBuilder = GetBuilder(reaction.Message.Value, starCount)
-        Dim message As Message
-        If Await _database.CheckExistenceAsync(Of Message)(reaction.MessageId) Then
-            message = Await _database.LoadObjectAsync(Of Message)(reaction.MessageId)
-            Dim msg = Await channel.GetMessageAsync(message.Id)
-        Else
-            message = New Message With
-            {
-                .ChannelId = channel.Id,
-                .CreatedAt = reaction.Message.Value.CreatedAt,
-                .Id = reaction.MessageId,
-                .UserId = reaction.Message.Value.Author.Id
-            }
-            Await _database.CreateNewObjectAsync(message)
-        End If
-        ' *brain fart* I will finish this later, damn
     End Function
 
     Function GetBuilder(msg As SocketUserMessage, starCount As Integer) As EmbedBuilder

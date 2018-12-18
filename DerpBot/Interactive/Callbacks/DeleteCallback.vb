@@ -36,15 +36,15 @@ Public Class DeleteCallback
         _Interative.AddReactionCallback(message, Me)
     End Sub
 
-    Public Sub StartDelayAsync()
-        Task.Run(Sub() Task.Delay(Timeout.GetValueOrDefault()).ContinueWith(Sub()
-                                                                                Task.Run(Sub() Message.DeleteAsync())
-                                                                                Interative.RemoveReactionCallback(Message)
-                                                                            End Sub))
+    Public Sub StartDelay()
+        Dim __ = Task.Run(Function() Task.Delay(Timeout.GetValueOrDefault()).ContinueWith(Sub()
+                                                                                              Dim ___ = Message.DeleteAsync()
+                                                                                              Interative.RemoveReactionCallback(Message)
+                                                                                          End Sub))
     End Sub
 
     Public Async Function HandleCallbackAsync(reaction As SocketReaction) As Task(Of Boolean) Implements IReactionCallback.HandleCallbackAsync
-        If Not reaction.Emote.Equals(reaction) Then Return False
+        If Not reaction.Emote.Equals(Me.Reaction) Then Return False
         Await Message.DeleteAsync()
         Interative.RemoveReactionCallback(Message)
         Return True

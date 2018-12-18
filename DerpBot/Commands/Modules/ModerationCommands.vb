@@ -3,7 +3,7 @@ Imports Discord
 Imports Humanizer
 Imports Qmmands
 
-<RequiredRole(SpecialRole.Admin Or SpecialRole.Moderator)>
+<RequiredSpecialRole(SpecialRole.Admin Or SpecialRole.Moderator)>
 <RequiredContext(ContextType.Guild)>
 Public Class ModerationCommands
     Inherits DerpBase(Of DerpContext)

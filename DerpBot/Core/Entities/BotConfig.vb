@@ -1,14 +1,14 @@
 ﻿Imports SQLExpress
 
 Public Class BotConfig
-    Inherits SQLObject
+    Inherits SqlObject
 
-    <Store, NotNull, StringLength(60)>
+    <Store, NotNull, Varchar(60)>
     Public Property Token As String = ""
 
     Public Overrides ReadOnly Property TableName As String
         Get
-            Return "botconfig"
+            Return "BotConfig"
         End Get
     End Property
 End Class
