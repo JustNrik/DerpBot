@@ -55,7 +55,7 @@ Public Class EvalService
         Dim script = CSharpScript.Create(code, options, GetType(Globals))
         Try
             Dim sw1 = Stopwatch.StartNew()
-            Dim compiled = script.Compile()
+            script.Compile()
             sw1.Stop()
             Dim sw2 = Stopwatch.StartNew()
             Dim state = Await script.RunAsync(globals)

@@ -8,7 +8,7 @@ Public Class OwnerCommands
     Inherits DerpBase
 
     Public Property Eval As EvalService
-    Public Property Database As SQLExpressClient
+    Public Property Database As SqlExpressClient
 
     <Command("csrun", "cseval")>
     Async Function CSRun(<Remainder> code As String) As Task(Of CommandResult)

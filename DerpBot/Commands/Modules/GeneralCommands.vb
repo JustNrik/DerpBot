@@ -7,7 +7,10 @@ Imports SixLabors.ImageSharp
 Imports SixLabors.ImageSharp.Formats.Png
 Imports SixLabors.ImageSharp.PixelFormats
 Imports SixLabors.ImageSharp.Processing
-Imports SQLExpress
+Imports SqlExpress
+Imports System.Threading
+Imports Discord.WebSocket
+Imports System.Text
 
 <RequiredContext(ContextType.Guild)>
 Public Class GeneralCommands
@@ -15,7 +18,7 @@ Public Class GeneralCommands
 
     Public Property Random As DerpRandom
     Public Property Economy As EcomonyService
-    Public Property Database As SQLExpressClient
+    Public Property Database As SqlExpressClient
 
     <Command("ping", "p")>
     <RunMode(RunMode.Parallel)>
@@ -133,6 +136,24 @@ Public Class GeneralCommands
         End If
         Await ReplyAsync("Invalid hex")
         Return Unsuccessful
+    End Function
+
+    <Command("toprich")>
+    <RunMode(RunMode.Parallel)>
+    Async Function TopRich() As Task(Of CommandResult)
+        Dim users = Context.Guild.Users
+        Dim ids = users.Select(Function(x) x.Id)
+        Dim list As New List(Of User)
+        For Each id In ids
+            list.Add(Await Database.LoadObjectAsync(Of User)(id))
+        Next
+        Dim group = list.Join(users, Function(x) x.Id, Function(x) x.Id, Function(x, y) New KeyValuePair(Of SocketGuildUser, Integer)(y, x.Money)).OrderByDescending(Function(x) x.Value).Take(10)
+        Dim builder As New EmbedBuilder
+        Dim i As Integer
+        Dim sb As New StringBuilder
+        builder.AddField("Top 10 Riches Players", group.Aggregate(sb, Function(x, y) sb.AppendLine($"{Interlocked.Add(i, 1)}) {y.Key.GetDisplayName()} ({y.Key.Id}) - Money: {y.Value}")).ToString())
+        Await SendEmbedAsync(builder.Build())
+        Return Successful
     End Function
 
 End Class
