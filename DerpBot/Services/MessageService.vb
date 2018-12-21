@@ -1,10 +1,11 @@
 ﻿Imports Discord
 Imports Discord.WebSocket
-Imports SQLExpress
+Imports SqlExpress
 Imports System.Collections.Concurrent
 Imports System.IO
 Imports Qmmands
 Imports Qmmands.CommandUtilities
+Imports System.Threading
 
 <Service(ServiceType.Singleton, 253)>
 Public Class MessageService
@@ -12,17 +13,18 @@ Public Class MessageService
 
     Private WithEvents _client As DiscordShardedClient
     Private WithEvents _commands As CommandService
-    Private ReadOnly _database As SQLExpressClient
+    Private ReadOnly _database As SqlExpressClient
     Private ReadOnly _interactive As InteractiveService
     Private ReadOnly _random As DerpRandom
     Private ReadOnly _economy As EcomonyService
     Private ReadOnly _log As LogService
+    Private ReadOnly _semaphore As New SemaphoreSlim(1, 1)
     Private ReadOnly _services As IServiceProvider
     Private Const CACHE_SIZE = 10
 
     Private ReadOnly _messageCache As New ConcurrentDictionary(Of ULong, ConcurrentQueue(Of Message))
 
-    Sub New(client As DiscordShardedClient, database As SQLExpressClient,
+    Sub New(client As DiscordShardedClient, database As SqlExpressClient,
             commands As CommandService, interactive As InteractiveService,
             services As IServiceProvider, random As DerpRandom,
             economy As EcomonyService, log As LogService)
@@ -42,22 +44,24 @@ Public Class MessageService
     End Function
 
     Public Function OnMessageReceived(msg As SocketMessage) As Task Handles _client.MessageReceived
-        Return HandleMessage(msg, False)
+        Return Task.Run(Function() HandleMessageAsync(msg, False))
     End Function
 
     Public Function OnMessageUpdated(cache As Cacheable(Of IMessage, ULong), message As SocketMessage, channel As ISocketMessageChannel) As Task Handles _client.MessageUpdated
-        Return HandleMessage(message, true)
+        Return Task.Run(Function() HandleMessageAsync(message, True))
     End Function
 
-    Async Function HandleMessage(msg As SocketMessage, isUpdated As Boolean) As Task
+    Async Function HandleMessageAsync(msg As SocketMessage, isUpdated As Boolean) As Task
         Dim channel = TryCast(msg.Channel, SocketGuildChannel)
         Dim message = TryCast(msg, SocketUserMessage)
         If msg.Author.IsBot OrElse String.IsNullOrEmpty(msg.Content) OrElse channel Is Nothing OrElse message Is Nothing Then Return
 
+        Await _semaphore.WaitAsync()
+
         If Not isUpdated AndAlso _random.Next(100) < 10 Then
             Dim user = Await _database.LoadObjectAsync(Of User)(message.Author.Id)
-            Dim amount = _random.Next(1, 3)
-            Dim __ = Task.Run(action:=Async Sub() Await _economy.AddMoneyAsync(user, amount))
+            Dim amount = _random.Next(1, 4)
+            Dim __ = Task.Run(Function() _economy.AddMoneyAsync(user, amount))
             Await _log.LogAsync($"The user {DirectCast(message.Author, IGuildUser).GetDisplayName()} ({message.Author.Id}) won {amount} money in the guild {channel.Guild.Name}!", LogSource.Economy)
         End If
 
@@ -75,6 +79,7 @@ Public Class MessageService
             If Not context.Guild.CurrentUser.GetPermissions(context.Channel).SendMessages Then Return
             Await _commands.ExecuteAsync(output, context, _services)
         End If
+        _semaphore.Release()
     End Function
 
     Function OnCommandErrored(result As ExecutionFailedResult, context As ICommandContext, provider As IServiceProvider) As Task Handles _commands.CommandErrored

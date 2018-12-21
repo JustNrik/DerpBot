@@ -55,6 +55,7 @@ Public Class LogService
     End Function
 
     Async Function OnDbLog(result As SqlResult) As Task Handles _db.Log
+        If TypeOf result.Obj Is Guild AndAlso result.LogSource = DbLogSource.Load Then Return ' Guild logs are spamming too much
         Await _semaphore.WaitAsync()
         Select Case result.LogSource
             Case DbLogSource.Remove
