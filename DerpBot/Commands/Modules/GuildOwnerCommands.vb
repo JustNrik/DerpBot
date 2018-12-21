@@ -6,7 +6,7 @@ Imports Qmmands
 <RequiredGuildOwner>
 <RequiredContext(ContextType.Guild)>
 Public Class GuildOwnerCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     Public Property Database As SQLExpressClient
 

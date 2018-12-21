@@ -6,7 +6,7 @@ Imports Qmmands
 <RequiredSpecialRole(SpecialRole.Admin)>
 <RequiredContext(ContextType.Guild)>
 Public Class AdministrationCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     Public Property Database As SQLExpressClient
 

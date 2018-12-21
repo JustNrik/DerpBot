@@ -6,7 +6,7 @@ Imports Qmmands
 <RequiredSpecialRole(SpecialRole.Admin Or SpecialRole.Moderator)>
 <RequiredContext(ContextType.Guild)>
 Public Class ModerationCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     <Command("mute", "m")>
     <Description("Removes all permissions (except view channel) from the user. He won't be able to send messages, react or anything else.")>

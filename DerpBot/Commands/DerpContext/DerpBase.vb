@@ -4,8 +4,8 @@ Imports Qmmands
 Public MustInherit Class DerpBase(Of T As {IDerpContext, Class})
     Inherits ModuleBase(Of T)
 
-    Protected Async Function SendEmbedAsync(embed As Embed) As Task(Of IUserMessage)
-        Return Await ReplyAsync(,, embed)
+    Protected Async Function SendEmbedAsync(embed As Embed, Optional options As RequestOptions = Nothing) As Task(Of IUserMessage)
+        Return Await ReplyAsync(,, embed, options)
     End Function
 
     Protected Async Function ReplyAsync(Optional text As String = Nothing,

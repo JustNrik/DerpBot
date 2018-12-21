@@ -8,7 +8,7 @@ Imports Qmmands
 
 <Group("help")>
 Public Class HelpCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     Public Property Commands As CommandService
     Public Property Database As SQLExpressClient

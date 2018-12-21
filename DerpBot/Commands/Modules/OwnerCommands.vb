@@ -5,7 +5,7 @@ Imports Qmmands
 <RequiredOwner>
 <RunMode(RunMode.Parallel)>
 Public Class OwnerCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     Public Property Eval As EvalService
     Public Property Database As SQLExpressClient

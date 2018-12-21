@@ -11,7 +11,7 @@ Imports SQLExpress
 
 <RequiredContext(ContextType.Guild)>
 Public Class GeneralCommands
-    Inherits DerpBase(Of DerpContext)
+    Inherits DerpBase
 
     Public Property Random As DerpRandom
     Public Property Economy As EcomonyService
