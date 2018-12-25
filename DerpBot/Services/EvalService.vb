@@ -59,7 +59,7 @@ Public Class EvalService
             sw1.Stop()
             Dim sw2 = Stopwatch.StartNew()
             Dim state = Await script.RunAsync(globals)
-            sw1.Stop()
+            sw2.Stop()
             Dim eb = New EmbedBuilder().
                     WithTitle("Eval executed successfully").
                     WithColor(Color.Green).
@@ -67,7 +67,8 @@ Public Class EvalService
                     WithFooter($"Requested by: {context.User.GetDisplayName()}, Compiled in {sw1.ElapsedMilliseconds}ms, Ran in {sw2.ElapsedMilliseconds}ms", context.User.GetAvatarOrDefaultUrl()).
                     WithThumbnailUrl(CSHARP_LOGO).
                     AddFieldIf(state.ReturnValue IsNot Nothing, "Output", $"```cs{vbLf}{state.ReturnValue}```").
-                    AddFieldIf(state.ReturnValue IsNot Nothing, "Return Type", $"```cs{vbLf}[{state.ReturnValue.GetType()}]```")
+                    AddFieldIf(state.ReturnValue IsNot Nothing, "Return Type", $"```cs{vbLf}[{state.ReturnValue?.GetType()}]```").
+                    AddFieldIf(state.ReturnValue Is Nothing, "Code", $"```cs{vbLf}{code}```")
 
             Await _message.SendEmbedAsync(context, eb.Build)
         Catch ex As CompilationErrorException

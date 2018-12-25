@@ -138,7 +138,7 @@ Public Class GeneralCommands
         Return Unsuccessful
     End Function
 
-    <Command("toprich")>
+    <Command("toprich", "toprichest")>
     <RunMode(RunMode.Parallel)>
     Async Function TopRich() As Task(Of CommandResult)
         Dim users = Context.Guild.Users

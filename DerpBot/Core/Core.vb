@@ -98,8 +98,8 @@ Public Module DerpBot
                     Where GetType(IStorableObject).IsAssignableFrom(type)
                     Select DirectCast(Activator.CreateInstance(type), IStorableObject)).ToArray()
 
-        Await _db.InitializeObjectsAsync(objs)
-        Await _db.LoadObjectCacheAsync(objs)
+        Await _db.InitializeObjectsAsync(Assembly.GetEntryAssembly())
+        Await _db.LoadObjectsCacheAsync(Assembly.GetEntryAssembly())
     End Function
 
     Async Function GetClientConfigAsync() As Task(Of DiscordSocketConfig)

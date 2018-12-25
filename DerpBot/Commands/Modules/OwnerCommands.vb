@@ -1,6 +1,7 @@
 ﻿Imports DerpBot.DerpCommandResult
-Imports SQLExpress
+Imports SqlExpress
 Imports Qmmands
+Imports Discord
 
 <RequiredOwner>
 <RunMode(RunMode.Parallel)>
@@ -38,8 +39,26 @@ Public Class OwnerCommands
     End Function
 
     <Command("memoryusage", "memusage", "getmem")>
-    Async Function GetMemoryUsage(Optional bool As Boolean = False) As Task(Of CommandResult)
-        Await ReplyAsync($"{GC.GetTotalMemory(bool) \ (2 << 19)} MBs")
+    Async Function GetMemoryUsage() As Task(Of CommandResult)
+        Using proc = Process.GetCurrentProcess()
+            Dim builder As New EmbedBuilder
+
+            With builder
+                .AddField("Private Memory Size", $"{proc.PrivateMemorySize64 \ (2 << 19)} MBs")
+                .AddField("Working Set", $"{proc.WorkingSet64 \ (2 << 19)} MBs")
+                .AddField("Current Thread Memory", $"{GC.GetAllocatedBytesForCurrentThread() \ (2 << 19)} MBs")
+                .AddField("Heap Allocation", $"{GC.GetTotalMemory(True) \ (2 << 19)} MBs")
+            End With
+
+            Await SendEmbedAsync(builder.Build())
+        End Using
+        Return Successful
+    End Function
+
+    <Command("gccollect")>
+    Async Function GCCollect() As Task(Of CommandResult)
+        GC.Collect()
+        Await ReactOkAsync()
         Return Successful
     End Function
 End Class
